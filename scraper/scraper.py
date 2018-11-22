@@ -29,6 +29,8 @@ def save_thread(path, base_url, directory=""):
 
 # to scrape the entire subforum, pass count=math.inf
 def save_subforum(start_path, base_url, directory="", count=1000, verbose=False):
+    if directory!="" and not os.path.exists(directory):
+        os.makedirs(directory)
     soup = BeautifulSoup(requests.get(base_url+start_path).text, "lxml")
     saved_count = 0
     # go through all links on the page, if they are a thread link, save it
@@ -38,8 +40,6 @@ def save_subforum(start_path, base_url, directory="", count=1000, verbose=False)
             if link.get("href").startswith("threads/"):
                 if verbose:
                     print("downloading {}/{}".format(saved_count, count))
-                if directory!="" and not os.path.exists(directory):
-                    os.makedirs(directory)
                 save_thread(link.get("href"), base_url, directory)
                 saved_count += 1
         # move to the next page
