@@ -13,6 +13,8 @@ def save_thread(path, base_url, directory=""):
     if not os.path.exists(directory):
         raise FileNotFoundError
     fname = path.split("/")[-2] + ".txt"
+    if os.path.isfile(directory + fname):
+        return
     with open(directory + fname, "w", encoding="utf-8") as ofile:    
         soup = BeautifulSoup(requests.get(base_url+path).text, "lxml")
         while True:
