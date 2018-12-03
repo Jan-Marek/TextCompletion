@@ -100,5 +100,8 @@ venv.bak/
 # mkdocs documentation
 /site
 
+#
+scraper/threads/
+
 # mypy
 .mypy_cache/
