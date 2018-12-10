@@ -3,6 +3,8 @@ import sys
 import numpy
 import h5py
 import theano
+from collections import Counter
+import re
 
 from theanolm import Vocabulary, Architecture, Network, TextSampler
 from theanolm.backend import TextFileType, get_default_device
@@ -31,22 +33,39 @@ def restoreModel(path):
 model = restoreModel(modelPath)
 sampler = TextSampler(model)
 print(model.vocabulary)
-
-samp = sampler.generate(10, num_sequences=10, seed_sequence='')
+seed = "i admire your dedication to helping all those"
+correct = 'kittens'
+wordN = 1
+seedN = len(seed.split(' '))
+seqN = 1500
+samp = sampler.generate(wordN + 1, num_sequences=seqN, seed_sequence=seed)
+allwords = ''
 for sequence in samp:
     pstr = ''
     for i,s in enumerate(sequence):
         if i > 0:
             pstr = pstr + s + ' '
-    print(pstr)
-    '''
-    try:
-        eos_pos = sequence.index('</s>')
-        sequence = sequence[:eos_pos+1]
-    except ValueError:
-        pass
-    printstring + ' '.join(sequence) + '\n'
-    '''
+    allwords += sequence[-1] + ' '
+
+c = Counter(re.findall('\w+', allwords))
+print(100*c[correct]/seqN)
+print(c.most_common(10))
+for i,obj in enumerate(c.most_common(10)):
+    print('{:d}. {:s} {:20s}    ({:.2f}%)'.format(i+1,seed,obj[0], 100*obj[1]/seqN))
+try:
+    print('   {:s} {:20s}    ({:.2f}%)'.format(seed,correct, 100*c[correct]/seqN))
+except:
+    print('Not found')
+
+
+'''
+try:
+    eos_pos = sequence.index('</s>')
+    sequence = sequence[:eos_pos+1]
+except ValueError:
+    pass
+printstring + ' '.join(sequence) + '\n'
+'''
 
 
 
