@@ -23,16 +23,20 @@ def tsplit(string, delimiters):
 
 
 linesRead = 0 
+messages = 0
 words = []
+takeFiles = 0 # tells how many files to take
+filesN = 1000000 # files taken at maximum
 with open('concatenatedCats.txt', 'w') as outfile:
     for f in files:
+        takeFiles = takeFiles + 1
+        if takeFiles > filesN: # only max amount of files
+            break
+
         with open(f) as infile:
             for line in infile:
-                if line[0]==' ':  # Remove the space if there is one in the start
-                    line = line[1:]
-                line = re.sub('®', ' ', line)
-                line = re.sub(r'^https?:\/\/.*[\r\n]*', '', line)
-
+                line = re.sub(r'^https?:\/\/.*[\r\n]*', '', line) # remove links
+                line = line.replace('®', ' ')
                 line = line.replace('<', ' ')
                 line = line.replace('>', ' ')
                 line = line.replace('*', ' ')
@@ -62,32 +66,48 @@ with open('concatenatedCats.txt', 'w') as outfile:
                 line = re.sub(r"\d+", ' <num> ', line)
 
                 line = line.replace(':', ' ')
+                line = line.replace(';', ' ')
                 line = line.replace('"', ' ')
                 line = line.replace('(', ' ')
                 line = line.replace(')', ' ')
                 line = line.replace('[', ' ')
                 line = line.replace(']', ' ')
 
+                # limit only to some characters
+                line = re.sub(r"[^a-z.!?'<>]+", ' ', line)
+
                 # lastly substitute multiple spaces with one
                 line = re.sub(' +', ' ', line)
-                words.append( len(line.split()) )
-                for i in tsplit(line, ('?', '!', '.')):  # split by ! . and ?
-                    if len(line)>0:
+                senList = tsplit(line, ('?', '!', '.'))
+                used = False
+                for ind, utter in enumerate(senList):  # split by ! . and ?
+                    if len(utter)>=6 and len(utter.split())>=4 and len(utter.split())<=200:  #require at least 6 characters and 4 words for utterance to pass
+                        if utter[0]==' ':  # Remove the space if there is one in the start
+                            utter = utter[1:]
                         linesRead += 1
-                        outfile.write( i )
+                        words.append( len(utter.split()) )
+                        if ind+1 == len(senList): 
+                            outfile.write( utter )
+                        else:
+                            outfile.write( utter + "\n")    
+                        used = True
+                if used: messages += 1
 
-printAnalysis = False
+printAnalysis = True
 if printAnalysis:
-    print('There are ', linesRead, 'lines (Individual comments)')
+    print('There are ', linesRead, 'lines (Individual sentences)')
     print('There are ', np.sum(words), 'words in total')
+    print(messages, 'messages were used in total')
+    print("words shorter than 40", np.sum(np.array(words)<=40)/len(words)) 
     plt.figure()
-    plt.hist(words, bins=300)
-
-    plt.xlabel('Message length (words)')
-    plt.ylabel('Amount of messages')
-    plt.title('Distribution of message lenghts')
+    plt.hist(words, bins=200)
+    print(np.median(words))
+    print(np.mean(words))
+    plt.xlabel('Sentence length (words)')
+    plt.ylabel('Amount of sentences')
+    plt.title('Distribution of sentence lenghts')
     plt.show()
-else:
+if True:
     np.random.seed(1111)
     print(linesRead)
     order = np.random.choice(2,size=linesRead+1, replace=True, p=np.array([0.9, 0.1]))
@@ -95,14 +115,13 @@ else:
     with open('catsTrain.txt', 'w') as train, open('catsTest.txt', 'w') as test:  #,open(catsValidate.txt, 'w') as valid
         i = 0
         with open('concatenatedCats.txt', 'r') as file:
-            for line in file:
-                if order[i]==0:
-                    train.write(line)
-                elif order[i]==1:
-                    test.write(line)
-                #elif order[i]==2:
-                    #valid.write(line)
-                i += 1
+            for l in file:
+                if len(l) > 3:
+                    if order[i]==0:
+                        train.write(l)
+                    if order[i]==1:
+                        test.write(l)
+                    i += 1
 
     trainbytes = os.path.getsize('catsTrain.txt')
     testbytes = os.path.getsize('catsTest.txt')
