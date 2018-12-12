@@ -1,4 +1,4 @@
-# TextCompletion
+# Text Completion
 Text Completion project for the Speech Recognition course at Aalto University
 
 Authors:
